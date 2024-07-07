@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Example</title>
+</head>
+<body>
+    <h1>Gestión de Países y Ciudades</h1>
+    <form id="countryForm">
+        <input type="text" id="countryName" placeholder="Nombre del país" required>
+        <input type="number" id="countryGrowthRate" placeholder="Tasa de crecimiento" required>
+        <button type="submit">Añadir País</button>
+    </form>
+    <form id="cityForm">
+        <input type="text" id="biome" placeholder="Bioma" required>
+        <input type="text" id="name" placeholder="Nombre de la ciudad" required>
+        <input type="number" id="growthRate" placeholder="Tasa de crecimiento" required>
+        <select id="country" required></select>
+        <button type="submit">Añadir Ciudad</button>
+    </form>
+    <h2>Ciudades</h2>
+    <ul id="cityList"></ul>
+    <button id="buttonCalcleGrowthRate">Incrementar Población</button>
+    <script src="script.js"></script>
+</body>
+</html>
