@@ -1,53 +1,54 @@
-// script.js
-
 let countries = [];
 let cities = [];
 
-// URL de tu backend donde manejará las operaciones con MongoDB Atlas
-const backendUrl = 'https://tu-backend-url'; // Reemplaza con la URL de tu backend
-
-// Función para guardar datos en el servidor a través de tu backend
-async function saveDataToServer(collectionName, data) {
-    try {
-        const response = await fetch(`${backendUrl}/${collectionName}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
+// Función para guardar datos en el servidor
+function saveDataToServer(url, data) {
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => {
         if (!response.ok) {
             throw new Error('Error al guardar los datos.');
         }
-        const responseData = await response.json();
+        return response.json();
+    })
+    .then(responseData => {
         console.log(responseData.message); // Mensaje de éxito
-    } catch (error) {
+    })
+    .catch(error => {
         console.error('Error:', error);
-    }
+    });
 }
 
-// Función para cargar datos desde el servidor a través de tu backend
-async function loadDataFromServer(collectionName) {
-    try {
-        const response = await fetch(`${backendUrl}/${collectionName}`);
+// Función para cargar datos del servidor
+function loadDataFromServer(url, callback) {
+    fetch(url)
+    .then(response => {
         if (!response.ok) {
             throw new Error('Error al cargar los datos.');
         }
-        return await response.json();
-    } catch (error) {
+        return response.json();
+    })
+    .then(data => {
+        callback(data);
+    })
+    .catch(error => {
         console.error('Error:', error);
-        return [];
-    }
+    });
 }
 
-// Clase para países
+// Class for countries
 class CountryClass {
     constructor(name, growthRate) {
         this.name = name;
         this.growthRate = growthRate;
         this.population = 0;
         countries.push(this);
-        saveDataToServer('countries', countries); // Guardar en el servidor
+        saveDataToServer('/api/countries', countries); // Guardar en el servidor
         updateCountryOptions();
     }
 
@@ -57,7 +58,7 @@ class CountryClass {
     }
 }
 
-// Clase para ciudades
+// Class for cities
 class CityClass {
     constructor(biome, name, growthRate, country) {
         this.biome = biome;
@@ -67,17 +68,17 @@ class CityClass {
         this.country = country;
         country.updatePopulation();
         cities.push(this);
-        saveDataToServer('cities', cities); // Guardar en el servidor
+        saveDataToServer('/api/cities', cities); // Guardar en el servidor
     }
 
     increasePopulation() {
         this.population += Math.round((this.population * (this.growthRate + this.country.growthRate) / 100));
         this.country.updatePopulation();
-        saveDataToServer('cities', cities); // Guardar en el servidor
+        saveDataToServer('/api/cities', cities); // Guardar en el servidor
     }
 }
 
-// Event listener para el formulario de países
+// Event listener for country form submission
 document.getElementById('countryForm').addEventListener('submit', function(event) {
     event.preventDefault();
     const name = document.getElementById('countryName').value;
@@ -87,7 +88,7 @@ document.getElementById('countryForm').addEventListener('submit', function(event
     document.getElementById('countryForm').reset();
 });
 
-// Event listener para el formulario de ciudades
+// Event listener for city form submission
 document.getElementById('cityForm').addEventListener('submit', function(event) {
     event.preventDefault();
     const biome = document.getElementById('biome').value;
@@ -102,7 +103,7 @@ document.getElementById('cityForm').addEventListener('submit', function(event) {
     }
 });
 
-// Función para actualizar las opciones de países en el formulario de ciudades
+// Function to update the list of country options in the city form
 function updateCountryOptions() {
     const countrySelect = document.getElementById('country');
     countrySelect.innerHTML = '';
@@ -114,7 +115,7 @@ function updateCountryOptions() {
     });
 }
 
-// Función para actualizar la lista de ciudades
+// Function to update the city list
 function updateCityList() {
     const cityList = document.getElementById('cityList');
     cityList.innerHTML = '';
@@ -134,7 +135,7 @@ function updateCityList() {
             let newGrowthRate = prompt("Ingrese la nueva tasa de crecimiento:");
             if (newGrowthRate !== null) {
                 country.growthRate = parseFloat(newGrowthRate);
-                saveDataToServer('countries', countries);
+                saveDataToServer('/api/countries', countries);
                 updateCityList();
             }
         });
@@ -153,7 +154,7 @@ function updateCityList() {
             deleteButton.addEventListener('click', () => {
                 cities = cities.filter(c => c !== city);
                 city.country.updatePopulation();
-                saveDataToServer('cities', cities);
+                saveDataToServer('/api/cities', cities);
                 updateCityList();
             });
             li.appendChild(deleteButton);
@@ -178,7 +179,7 @@ function updateCityList() {
                         countryOption.addEventListener('click', () => {
                             city.country = eachCountry;
                             city.country.updatePopulation();
-                            saveDataToServer('cities', cities);
+                            saveDataToServer('/api/cities', cities);
                             updateCityList();
                         });
                         countryListForChangingPosession.appendChild(countryOption);
@@ -195,7 +196,7 @@ function updateCityList() {
                 let newGrowthRate = prompt("Ingrese la nueva tasa de crecimiento:");
                 if (newGrowthRate !== null) {
                     city.growthRate = parseFloat(newGrowthRate);
-                    saveDataToServer('cities', cities);
+                    saveDataToServer('/api/cities', cities);
                     updateCityList();
                 }
             });
@@ -209,21 +210,23 @@ function updateCityList() {
 }
 
 // Cargar datos de países desde el servidor al inicio
-document.addEventListener('DOMContentLoaded', async () => {
-    const loadedCountries = await loadDataFromServer('countries');
-    countries = loadedCountries || [];
-    updateCountryOptions();
-    updateCityList();
+document.addEventListener('DOMContentLoaded', () => {
+    loadDataFromServer('/api/countries', data => {
+        countries = data;
+        updateCountryOptions();
+        updateCityList();
+    });
 });
 
 // Cargar datos de ciudades desde el servidor al inicio
-document.addEventListener('DOMContentLoaded', async () => {
-    const loadedCities = await loadDataFromServer('cities');
-    cities = loadedCities || [];
-    updateCityList();
+document.addEventListener('DOMContentLoaded', () => {
+    loadDataFromServer('/api/cities', data => {
+        cities = data;
+        updateCityList();
+    });
 });
 
-// Event listener para el botón de incrementar población
+// Event listener for the button to increase population
 document.getElementById('buttonCalcleGrowthRate').addEventListener('click', function() {
     cities.forEach(city => {
         city.increasePopulation();
